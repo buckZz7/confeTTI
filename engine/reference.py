@@ -1,40 +1,35 @@
 #!/usr/bin/env python3
-"""confetti.engine.reference — generate and verify the immutable reference.
+"""confetti.engine.reference — generate, store, and load the immutable reference.
 
 The reference is Qwen-Image-2512's own BF16 output over a public
-(seed, prompt, steps) corpus, computed once on an A100-80GB, hash-bound, and
-reproducible by anyone. This is the self-authenticating anchor the competition
-measures everything against.
+(seed, prompt, steps) corpus, computed once on an A100-80GB, stored, and
+reproducible by anyone. This is the self-anchored anchor the gate measures
+every submission against.
 
-This is the correct, verified API for driving the QwenImagePipeline manually
-(per-step velocity predictions), captured from the spike on 2026-08-13.
+Storage layout (two files per reference dir):
+  reference.json   manifest: model, dtype, steps, timesteps, corpus, hashes, cost
+  reference.pt     torch dict: {probe_key: [per-step velocity prediction tensors]}
+
+The gate needs the reference's actual per-step prediction TENSORS, so we persist
+them (not just hashes). The hashes in the manifest are the determinism/verify
+check; the tensors are the comparison baseline.
 """
 import os
+import json
+import time
 import hashlib
-from dataclasses import dataclass, field
 
 os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
 import torch
-from diffusers import QwenImagePipeline
 
 DEFAULT_REPO = "Qwen/Qwen-Image-2512"
 DEFAULT_HEIGHT = 1024
 DEFAULT_WIDTH = 1024
 DEFAULT_STEPS = 4
-# 16 latent channels (Qwen-Image VAE), 8x spatial compression, then /2 for the
-# img_shapes axis used by the transformer.
 NUM_LATENT_CHANNELS = 16
 
-
-@dataclass
-class Reference:
-    repo: str
-    dtype: str
-    steps: int
-    timesteps: list
-    per_item_s: float
-    probes: dict = field(default_factory=dict)
-    # probes: {(seed, prompt): [per-step velocity prediction hashes...]}
+MANIFEST_NAME = "reference.json"
+TENSORS_NAME = "reference.pt"
 
 
 def hash_tensor(t: torch.Tensor) -> str:
@@ -43,7 +38,13 @@ def hash_tensor(t: torch.Tensor) -> str:
 
 def run_steps(pipe, prompt, seed, device, timesteps, height=DEFAULT_HEIGHT,
               width=DEFAULT_WIDTH, encode_cache=None):
-    """Run the denoising loop, return per-step velocity predictions + final latent."""
+    """Run the denoising loop, return per-step velocity predictions + final latent.
+
+    This is the verified QwenImagePipeline call contract (from the 2026-08-13
+    spike): encode_prompt (no CFG kwarg), prepare_latents (single tensor),
+    transformer(hidden_states, timestep=t/1000 on device, encoder_hidden_states,
+    encoder_hidden_states_mask, img_shapes), scheduler.step.
+    """
     if encode_cache is not None and prompt in encode_cache:
         emb, emb_mask = encode_cache[prompt]
     else:
@@ -75,44 +76,66 @@ def run_steps(pipe, prompt, seed, device, timesteps, height=DEFAULT_HEIGHT,
 
 
 def generate_reference(repo=DEFAULT_REPO, prompts=None, seeds=None, steps=DEFAULT_STEPS,
-                       device="cuda", out_dir=None):
-    """Generate the reference over the (seed, prompt) corpus.
+                       device="cuda", height=DEFAULT_HEIGHT, width=DEFAULT_WIDTH,
+                       out_dir=None):
+    """Generate the reference over the (seed, prompt) corpus and persist it.
 
-    Returns a Reference with per-step prediction hashes and the final-latent
-    hash per probe, plus measured per-item cost.
+    Returns the output dir containing reference.json + reference.pt.
     """
     prompts = prompts or []
     seeds = seeds or []
-    import time
+    if out_dir is None:
+        out_dir = "reference"
+    os.makedirs(out_dir, exist_ok=True)
+
+    from diffusers import QwenImagePipeline  # lazy: GPU path only
     pipe = QwenImagePipeline.from_pretrained(repo, torch_dtype=torch.bfloat16)
     pipe.to(device)
     timesteps = list(pipe.scheduler.timesteps)[:steps]
-
     cache = {}
-    ref = Reference(repo=repo, dtype="bfloat16", steps=steps,
-                    timesteps=[int(t) for t in timesteps])
+
+    tensors = {}
+    hashes = {}
     t0 = time.time()
     for seed in seeds:
         for prompt in prompts:
-            preds, final_lat = run_steps(pipe, prompt, seed, device,
-                                         timesteps, encode_cache=cache)
-            ref.probes[(seed, prompt)] = {
+            key = f"{seed}:{prompt}"
+            preds, final_lat = run_steps(pipe, prompt, seed, device, timesteps,
+                                         height=height, width=width, encode_cache=cache)
+            tensors[key] = preds
+            hashes[key] = {
                 "pred_hashes": [hash_tensor(p) for p in preds],
                 "final_latent_hash": hash_tensor(final_lat),
             }
-    ref.per_item_s = (time.time() - t0) / max(len(ref.probes), 1)
-    return ref
+    per_item_s = (time.time() - t0) / max(len(tensors), 1)
 
-
-def to_json(ref: Reference) -> dict:
-    """Serialize the reference (used for the hash-bound artifact)."""
-    return {
-        "repo": ref.repo,
-        "dtype": ref.dtype,
-        "steps": ref.steps,
-        "timesteps": ref.timesteps,
-        "per_item_s": round(ref.per_item_s, 3),
-        "probes": {
-            f"{seed}:{prompt}": v for (seed, prompt), v in ref.probes.items()
-        },
+    manifest = {
+        "repo": repo,
+        "dtype": "bfloat16",
+        "steps": steps,
+        "timesteps": [int(t) for t in timesteps],
+        "height": height,
+        "width": width,
+        "prompts": prompts,
+        "seeds": seeds,
+        "per_item_s": round(per_item_s, 3),
+        "probes": hashes,
     }
+    with open(os.path.join(out_dir, MANIFEST_NAME), "w") as f:
+        json.dump(manifest, f, indent=2)
+    torch.save({"probes": tensors}, os.path.join(out_dir, TENSORS_NAME))
+    return out_dir
+
+
+def load_reference(ref_dir):
+    """Load a reference dir, return (manifest: dict, tensors: {key: [tensors]})."""
+    with open(os.path.join(ref_dir, MANIFEST_NAME)) as f:
+        manifest = json.load(f)
+    tensors = torch.load(os.path.join(ref_dir, TENSORS_NAME),
+                         map_location="cpu", weights_only=True)["probes"]
+    return manifest, tensors
+
+
+def reference_probe_keys(manifest):
+    """The canonical probe keys (seed:prompt) for this reference."""
+    return list(manifest["probes"].keys())
