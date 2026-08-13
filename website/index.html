@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>confeTTI — Text-to-image runtime for a single RTX 5090</title>
+<meta name="description" content="confeTTI: a text-to-image runtime competition for a single RTX 5090. Submit a model + runtime recipe, reproduce the reference's output, and the fastest faithful recipe leads the board.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============ confeTTI design system (Linear-derived) ============ */
+:root{
+  --bg:#08090a;
+  --panel:#0f1011;
+  --surface:#191a1b;
+  --surface2:#28282c;
+  --ink:#f7f8f8;
+  --ink2:#d0d6e0;
+  --ink3:#8a8f98;
+  --ink4:#62666d;
+  --brand:#5e6ad2;
+  --accent:#7170ff;
+  --accent2:#828fff;
+  --green:#27a644;
+  --border:rgba(255,255,255,0.08);
+  --border-subtle:rgba(255,255,255,0.05);
+  --bord-solid:#23252a;
+  --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font);
+  font-feature-settings:'cv01','ss03';
+  background:var(--bg);
+  color:var(--ink);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--accent2)}
+
+/* ============ confetti canvas (fires once on open) ============ */
+#confetti{
+  position:fixed;inset:0;width:100%;height:100%;
+  pointer-events:none;z-index:50;
+}
+#confetti-canvas{display:block;width:100%;height:100%}
+
+/* ============ nav ============ */
+header{
+  position:sticky;top:0;z-index:40;
+  background:rgba(8,9,10,0.8);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border-subtle);
+}
+.nav{
+  max-width:1200px;margin:0 auto;padding:0 24px;
+  display:flex;align-items:center;justify-content:space-between;height:64px;
+}
+.brand{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600;color:var(--ink);letter-spacing:-0.01em}
+.brand-mark{font-size:20px;line-height:1}
+.nav-links{display:flex;align-items:center;gap:24px}
+.nav-links a{font-size:14px;font-weight:500;color:var(--ink3)}
+.nav-links a:hover{color:var(--ink)}
+.nav-cta{
+  background:var(--brand);color:#fff;font-size:14px;font-weight:600;
+  padding:8px 16px;border-radius:6px;border:none;cursor:pointer;
+  transition:background .15s;
+}
+.nav-cta:hover{background:var(--accent2);color:#fff}
+
+/* ============ hero ============ */
+.hero{
+  max-width:1200px;margin:0 auto;padding:120px 24px 80px;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:500;color:var(--ink3);
+  border:1px solid var(--bord-solid);border-radius:9999px;
+  padding:4px 12px;margin-bottom:32px;
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.hero h1{
+  font-size:72px;font-weight:600;line-height:1;letter-spacing:-1.584px;
+  color:var(--ink);margin-bottom:24px;
+}
+.hero h1 .tti{background:linear-gradient(135deg,#7170ff,#5e6ad2);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .sub{
+  font-size:20px;font-weight:400;line-height:1.6;letter-spacing:-0.165px;
+  color:var(--ink3);max-width:640px;margin-bottom:40px;
+}
+.hero-ctas{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.btn{
+  font-size:15px;font-weight:600;padding:10px 20px;border-radius:6px;
+  cursor:pointer;transition:all .15s;border:1px solid transparent;
+}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{background:var(--accent2);color:#fff}
+.btn-ghost{
+  background:rgba(255,255,255,0.02);color:#e2e4e7;
+  border:1px solid rgb(36,40,44);
+}
+.btn-ghost:hover{background:rgba(255,255,255,0.05)}
+
+/* ============ sections ============ */
+section{max-width:1200px;margin:0 auto;padding:80px 24px}
+.sec-label{
+  font-size:13px;font-weight:600;color:var(--ink4);
+  letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px;
+}
+h2.sec-title{
+  font-size:48px;font-weight:600;line-height:1;letter-spacing:-1.056px;
+  color:var(--ink);margin-bottom:24px;max-width:720px;
+}
+.sec-body{font-size:18px;font-weight:400;line-height:1.6;color:var(--ink3);max-width:680px}
+
+/* grid cards */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px}
+.card{
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border);
+  border-radius:8px;padding:24px;
+  transition:background .15s;
+}
+.card:hover{background:rgba(255,255,255,0.04)}
+.card .k{
+  font-size:13px;font-weight:600;color:var(--accent);
+  letter-spacing:0.02em;margin-bottom:10px;
+}
+.card h3{font-size:20px;font-weight:600;letter-spacing:-0.24px;color:var(--ink);margin-bottom:8px}
+.card p{font-size:15px;font-weight:400;line-height:1.6;color:var(--ink3)}
+
+/* two-col */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+.two-col .sticky{position:sticky;top:96px}
+
+/* table */
+.spec{
+  width:100%;border-collapse:collapse;font-size:14px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border);border-radius:8px;overflow:hidden;
+}
+.spec th,.spec td{text-align:left;padding:14px 20px;border-bottom:1px solid var(--border-subtle)}
+.spec th{font-size:12px;font-weight:600;color:var(--ink4);letter-spacing:0.06em;text-transform:uppercase;background:rgba(255,255,255,0.02)}
+.spec td{color:var(--ink2)}
+.spec tr:last-child td{border-bottom:none}
+.spec .val{font-family:var(--mono);font-size:13px;color:var(--ink)}
+.spec .good{color:var(--green);font-family:var(--mono)}
+
+/* code block */
+.code{
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border);border-radius:8px;
+  padding:20px 24px;overflow-x:auto;
+}
+.code pre{font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--ink2)}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.chip{
+  font-size:13px;font-weight:500;color:var(--ink2);
+  border:1px solid var(--bord-solid);border-radius:9999px;
+  padding:6px 14px;background:transparent;
+}
+
+/* footer */
+footer{border-top:1px solid var(--border-subtle);padding:48px 24px 64px;margin-top:80px}
+.foot{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.foot .f-brand{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;color:var(--ink)}
+.foot .f-sub{font-size:13px;color:var(--ink4)}
+.foot-links{display:flex;gap:20px;font-size:14px}
+
+/* responsive */
+@media(max-width:960px){
+  .grid{grid-template-columns:1fr}
+  .two-col{grid-template-columns:1fr;gap:32px}
+  .two-col .sticky{position:static}
+  .hero h1{font-size:48px;letter-spacing:-1.056px}
+  h2.sec-title{font-size:36px;letter-spacing:-0.8px}
+}
+@media(max-width:640px){
+  .hero{padding:80px 20px 60px}
+  .hero h1{font-size:40px}
+  .nav-links{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  #confetti{display:none}
+  *{transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- confetti: bursts once on page open -->
+<div id="confetti"><canvas id="confetti-canvas"></canvas></div>
+
+<!-- ============ nav ============ -->
+<header>
+  <div class="nav">
+    <a href="#" class="brand"><span class="brand-mark">🎉</span><span>confeTTI</span></a>
+    <nav class="nav-links">
+      <a href="#the-race">The race</a>
+      <a href="#quality-floor">Quality floor</a>
+      <a href="#reference">Reference</a>
+      <a href="#eval">Eval</a>
+    </nav>
+    <a href="https://github.com/buckZz7/confeTTI" target="_blank" rel="noopener" class="nav-cta">View repo</a>
+  </div>
+</header>
+
+<!-- ============ hero ============ -->
+<section class="hero">
+  <span class="hero-eyebrow"><span class="dot"></span>Text-to-image runtime — single RTX 5090</span>
+  <h1>confe<span class="tti">TTI</span></h1>
+  <p class="sub">A submission is a model + runtime recipe that reproduces a fixed full-precision reference's output while generating images as fast as possible on one RTX 5090 (32GB). The fastest recipe that holds the quality floor leads the board.</p>
+  <div class="hero-ctas">
+    <a href="https://github.com/buckZz7/confeTTI" target="_blank" rel="noopener" class="btn btn-primary">View the repo</a>
+    <a href="#the-race" class="btn btn-ghost">How it works</a>
+  </div>
+</section>
+
+<!-- ============ the race ============ -->
+<section id="the-race">
+  <div class="sec-label">The race</div>
+  <h2 class="sec-title">What you're optimizing</h2>
+  <p class="sec-body">End-to-end wall-clock seconds per generated image at a fixed resolution and step budget, on one RTX 5090. The reference is Qwen-Image-2512 in BF16 (~57.7GB — it does not fit the card). The race: take a frontier model that can't run on a 32GB card, make it run, and make it run fast.</p>
+  <div class="grid">
+    <div class="card">
+      <div class="k">KERNELS</div>
+      <h3>Attention & compute</h3>
+      <p>SageAttention-style, flash / memory-efficient attention, kernel fusion.</p>
+    </div>
+    <div class="card">
+      <div class="k">COMPILE</div>
+      <h3>Graphs & passes</h3>
+      <p>CUDA graphs, TensorRT, sfast, torch.compile — cut overhead per step.</p>
+    </div>
+    <div class="card">
+      <div class="k">FIT</div>
+      <h3>Quantization</h3>
+      <p>INT4, NVFP4, GGUF, FP8 — a means to fit 32GB, not the goal itself.</p>
+    </div>
+    <div class="card">
+      <div class="k">STEPS</div>
+      <h3>Distillation</h3>
+      <p>Fewer-step samplers and distilled variants without collapsing quality.</p>
+    </div>
+    <div class="card">
+      <div class="k">MEMORY</div>
+      <h3>Offload</h3>
+      <p>Weights, KV, activation offload and memory planning under 32GB.</p>
+    </div>
+    <div class="card">
+      <div class="k">THROUGHPUT</div>
+      <h3>Batching</h3>
+      <p>Images-per-second under concurrency, not just single-image latency.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ quality floor ============ -->
+<section id="quality-floor">
+  <div class="two-col">
+    <div class="sticky">
+      <div class="sec-label">The quality floor</div>
+      <h2 class="sec-title">Speed is only the race. Fidelity is the gate.</h2>
+      <p class="sec-body">A recipe must reproduce the reference's per-step velocity predictions within a distance tolerance on fixed (prompt, seed) probes. This is a deterministic, model-free comparison — the reference model's own output is the floor, so a recipe that trades quality for speed (skipped steps, collapsed output) fails the gate regardless of how fast it is.</p>
+    </div>
+    <div>
+      <div class="spec-wrap">
+        <table class="spec">
+          <thead>
+            <tr><th>Measurement</th><th>Per-step dist vs ref</th><th>vs noise floor</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Noise floor (ref vs ref)</td><td class="val">0.0012</td><td class="val">1.0x</td></tr>
+            <tr><td>Good recipe</td><td class="val">0.0038</td><td class="val">3.1x</td></tr>
+            <tr><td>Collapsed recipe</td><td class="val">0.0126</td><td class="val">10.3x</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sec-body" style="margin-top:20px;font-size:15px">bad/good ratio <strong style="color:var(--ink)">3.3x</strong> — a 6x tolerance cleanly separates good recipes from collapsed ones. The gate is tolerance-based, not bit-exact: BF16 is bit-identical back-to-back but drifts ~1e-3 per-step across runs (CuBLAS / memory-layout nondeterminism).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ reference ============ -->
+<section id="reference">
+  <div class="sec-label">Reference model</div>
+  <h2 class="sec-title">Qwen-Image-2512</h2>
+  <div class="two-col">
+    <div>
+      <table class="spec">
+        <tbody>
+          <tr><td>License</td><td class="val">apache-2.0</td></tr>
+          <tr><td>Access</td><td class="val">ungated</td></tr>
+          <tr><td>Architecture</td><td class="val">QwenImageTransformer2DModel · flow matching</td></tr>
+          <tr><td>Depth</td><td class="val">60 layers · 24 heads × 128 (3072 hidden)</td></tr>
+          <tr><td>Channels</td><td class="val">in 64 / out 16 · patch 2</td></tr>
+          <tr><td>Transformer BF16</td><td class="val">40.86 GB</td></tr>
+          <tr><td>Text encoder BF16</td><td class="val">16.58 GB</td></tr>
+          <tr><td>VAE</td><td class="val">0.25 GB</td></tr>
+          <tr><td>Total BF16</td><td class="val">≈ 57.7 GB</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <p class="sec-body">Full-precision reference is generated once on an A100-80GB; submissions run on the 5090. Anyone can reproduce the reference — it is a computation, not a secret.</p>
+      <div class="chips">
+        <span class="chip">text-to-image</span>
+        <span class="chip">flow matching</span>
+        <span class="chip">BF16</span>
+        <span class="chip">Apache 2.0</span>
+        <span class="chip">commercial OK</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ eval ============ -->
+<section id="eval">
+  <div class="sec-label">Eval</div>
+  <h2 class="sec-title">Cheap, deterministic, same-box</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="k">GATE</div>
+      <h3>Per-step velocity distance</h3>
+      <p>Each submission's predictions are compared to the reference over the public (prompt, seed) corpus. ~2s per probe, so N=1000+ probes per submission is cheap.</p>
+    </div>
+    <div class="card">
+      <div class="k">RACE</div>
+      <h3>Wall-clock per image</h3>
+      <p>Seconds per image at fixed resolution and steps, measured on the same RTX 5090 for every submission — no cross-box variance.</p>
+    </div>
+    <div class="card">
+      <div class="k">GUARD</div>
+      <h3>Two-sided speed check</h3>
+      <p>Implausibly-fast and underclaiming runs are both rejected. The number is what the box actually produced.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ footer ============ -->
+<footer>
+  <div class="foot">
+    <div>
+      <div class="f-brand"><span>🎉</span> confeTTI</div>
+      <div class="f-sub">Text-to-image runtime for a single RTX 5090.</div>
+    </div>
+    <div class="foot-links">
+      <a href="https://github.com/buckZz7/confeTTI" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://buckzz7.github.io/confeTTI/" target="_blank" rel="noopener">Live</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ============ confetti — bursts once on page open ============ */
+(function(){
+  var canvas = document.getElementById('confetti-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W, H;
+  var pieces = [];
+  var running = true;
+  var colors = ['#7170ff','#5e6ad2','#828fff','#f7f8f8','#27a644','#d0d6e0'];
+
+  function resize(){
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function spawn(){
+    var count = 220;
+    for (var i = 0; i < count; i++){
+      pieces.push({
+        x: W/2 + (Math.random()-0.5)*W*0.8,
+        y: H*0.30 + (Math.random()-0.5)*H*0.4,
+        vx: (Math.random()-0.5)*10,
+        vy: (Math.random()-0.6)*7 - 4,
+        g: 0.12 + Math.random()*0.08,
+        size: 7 + Math.random()*8,
+        rot: Math.random()*Math.PI*2,
+        vr: (Math.random()-0.5)*0.3,
+        color: colors[Math.floor(Math.random()*colors.length)],
+        life: 1,
+        decay: 0.0035 + Math.random()*0.004,
+        shape: Math.random() < 0.5 ? 'rect' : 'circle'
+      });
+    }
+  }
+  spawn();
+
+  function step(){
+    if (!running) return;
+    ctx.clearRect(0,0,W,H);
+    var any = false;
+    for (var i = pieces.length-1; i >= 0; i--){
+      var p = pieces[i];
+      p.x += p.vx; p.y += p.vy; p.vy += p.g; p.vx *= 0.99; p.vy *= 0.99;
+      p.rot += p.vr; p.life -= p.decay;
+      if (p.life <= 0 || p.y > H + 40){ pieces.splice(i,1); continue; }
+      any = true;
+      ctx.save();
+      ctx.globalAlpha = Math.max(p.life, 0);
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      if (p.shape === 'rect'){
+        ctx.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
+      } else {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.size/2, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    requestAnimationFrame(step);
+    if (!any && pieces.length === 0) running = false;
+  }
+  requestAnimationFrame(step);
+})();
+</script>
+</body>
+</html>
