@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.coverage
+.pytest_cache/
+
+# Eval artifacts (never commit)
+runs/
+league_state.json
+reference.json
+candidate.json
+*.log
+
+# OS
+.DS_Store
