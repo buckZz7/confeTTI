@@ -1,80 +1,79 @@
 #!/usr/bin/env python3
 """Tests for the confeTTI eval harness (GPU-free). Run with: pytest -q
 
-These exercise the scoring core (gate application over a fake probe runner),
+These exercise the scoring core (output-fidelity gate over a fake probe runner),
 the reference manifest/serialization, and the anti-memorization intake check.
 """
 import os
 os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
 import torch
 
-from engine.gate import GateConfig, gate, per_probe_distance, mean_abs_diff
+from engine.gate import GateConfig, gate, image_distance, _normalize
 from engine.eval import score_submission, measure_speed
-from engine.reference import hash_tensor, generate_reference, load_reference  # noqa: F401
+from engine.reference import hash_tensor  # noqa: F401
 from engine.verify import check_real_model
 
 
-def _mk_preds(fill, steps=4, shape=(4, 4)):
-    return [torch.full(shape, fill) for _ in range(steps)]
+def _img(fill, shape=(1, 3, 16, 16)):
+    return torch.full(shape, fill)
 
 
 # ---- gate ----
 
-def test_mean_abs_diff():
-    a = torch.zeros(4)
-    b = torch.ones(4)
-    assert mean_abs_diff(a, b) == 1.0
+def test_identical_images_zero_distance():
+    # The same image should be near-zero LPIPS distance.
+    a = torch.full((1, 3, 256, 256), 0.5)
+    d = image_distance(a, a.clone())
+    assert d < 0.001
 
 
-def test_identical_predictions_zero_distance():
-    preds = [torch.zeros(4, 4), torch.zeros(4, 4)]
-    assert per_probe_distance(preds, preds) == 0.0
+def test_different_images_large_distance():
+    # Very different images (all black vs all white) should be high LPIPS.
+    black = torch.zeros(1, 3, 256, 256)
+    white = torch.ones(1, 3, 256, 256)
+    d = image_distance(black, white)
+    assert d > 0.5
 
 
-def test_gate_calibration_separates_good_from_bad():
-    # Measured spike numbers: good ~3.1x floor passes, bad ~10.3x fails, at 6x tol.
-    cfg = GateConfig()
-    ref = [torch.zeros(4, 4) for _ in range(4)]
-    good = [torch.full((4, 4), 0.0038) for _ in range(4)]
-    bad = [torch.full((4, 4), 0.0126) for _ in range(4)]
-    assert gate(cfg, good, ref)[0] is True
-    assert gate(cfg, bad, ref)[0] is False
+def test_gate_tolerance():
+    cfg = GateConfig(tolerance=0.30)
+    a = torch.full((1, 3, 256, 256), 0.5)
+    ok, d = gate(cfg, a, a.clone())
+    assert ok is True
+    assert d < 0.01
 
 
 # ---- eval scoring core (GPU-free) ----
 
-def test_score_submission_passes_good_quant():
-    cfg = GateConfig()
+def test_score_submission_passes_close_image():
+    cfg = GateConfig(tolerance=0.30)
     keys = ["42:a", "42:b", "43:a", "43:b"]
-    ref = {k: _mk_preds(0.0) for k in keys}
-    # Good quant: predictions 0.0038 above the (0.0) reference -> within 6x tol.
+    ref = {k: torch.full((1, 3, 256, 256), 0.5) for k in keys}
     def runner(key):
-        return _mk_preds(0.0038)
+        return torch.full((1, 3, 256, 256), 0.5)
     res = score_submission(runner, ref, keys, gate_cfg=cfg)
     assert res["passes_gate"] is True
     assert res["probes_evaluated"] == 4
 
 
-def test_score_submission_rejects_bad_quant():
-    cfg = GateConfig()
-    keys = ["42:a", "42:b", "43:a", "43:b"]
-    ref = {k: _mk_preds(0.0) for k in keys}
+def test_score_submission_rejects_different_image():
+    cfg = GateConfig(tolerance=0.30)
+    keys = ["42:a", "42:b"]
+    ref = {k: torch.zeros(1, 3, 256, 256) for k in keys}
     def runner(key):
-        return _mk_preds(0.0126)
+        return torch.ones(1, 3, 256, 256)  # all white vs ref all black
     res = score_submission(runner, ref, keys, gate_cfg=cfg)
     assert res["passes_gate"] is False
-    assert res["mean_distance"] > res["tolerance"]
 
 
 def test_score_submission_skips_probes_missing_from_reference():
-    cfg = GateConfig()
+    cfg = GateConfig(tolerance=0.30)
     keys = ["42:a", "42:b", "43:a", "43:b"]
-    # Reference only has a subset of the requested keys.
-    ref = {"42:a": _mk_preds(0.0), "42:b": _mk_preds(0.0)}
+    ref = {"42:a": torch.full((1, 3, 256, 256), 0.5),
+           "42:b": torch.full((1, 3, 256, 256), 0.5)}
     def runner(key):
-        return _mk_preds(0.0038)
+        return torch.full((1, 3, 256, 256), 0.5)
     res = score_submission(runner, ref, keys, gate_cfg=cfg)
-    # Only the keys present in the reference are evaluated.
     assert res["probes_evaluated"] == 2
     assert res["probes_total"] == 4
 
@@ -107,8 +106,6 @@ def test_check_real_model_rejects_missing_transformer(tmp_path):
 # ---- reference manifest ----
 
 def test_manifest_dict_shape():
-    # generate_reference builds a manifest dict directly; verify the shape a
-    # real manifest would have (mirrors generate_reference's output).
     manifest = {
         "repo": "x", "dtype": "bfloat16", "steps": 4,
         "timesteps": [1000, 999, 998, 997],
@@ -116,12 +113,13 @@ def test_manifest_dict_shape():
         "prompts": ["a"], "seeds": [42],
         "per_item_s": 2.0,
         "probes": {
-            "42:a": {"pred_hashes": ["x", "y"], "final_latent_hash": "z"}
+            "42:a": {"pred_hashes": ["x", "y"], "final_latent_hash": "z",
+                     "final_image_hash": "w"}
         },
     }
     assert manifest["steps"] == 4
     assert "42:a" in manifest["probes"]
-    assert manifest["probes"]["42:a"]["final_latent_hash"] == "z"
+    assert manifest["probes"]["42:a"]["final_image_hash"] == "w"
 
 
 def test_hash_tensor_deterministic():

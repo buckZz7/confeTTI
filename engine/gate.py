@@ -1,44 +1,73 @@
 #!/usr/bin/env python3
-"""confetti.engine.gate — the per-step fidelity gate.
+"""confetti.engine.gate — the output-fidelity gate.
 
-A submission must reproduce the reference's per-step velocity predictions
-within a distance tolerance. This is the deterministic, non-trainable,
-self-anchored check that makes the competition trustless.
+A submission must reproduce the reference's FINAL IMAGE within a perceptual
+distance tolerance on the public (prompt, seed) corpus. This is what makes the
+competition able to reward BOTH quantization AND distillation:
 
-The gate is TOLERANCE-based, not bit-exact: BF16 on a GPU is bit-identical
-back-to-back but drifts ~1e-3 per-step across runs (CuBLAS / memory-layout
-nondeterminism). So the gate compares distance to a threshold, calibrated to
-sit between good and bad quants (spike: good ~3.1x floor, bad ~10.3x floor,
-bad/good ratio 3.3x).
+  - A per-step velocity gate would reject distillation (a distilled 4-step
+    model legitimately predicts differently per step, ~210x off, even though
+    its output image is good). Measured on the 2026-08-13 spike.
+  - A final-LATENT gate also fails (distilled latents are ~0.207 off even when
+    the image is perceptually close).
+  - A final-IMAGE perceptual gate (LPIPS) is the only option that accepts
+    legit speed recipes (quant + distill) while still rejecting collapsed ones.
+
+LPIPS is a frozen, non-trainable network (VGG-based) — not an LLM/VLM judge and
+not trained on the eval corpus, so it stays deterministic and ungameable-by-
+overfit. The anti-memorization gate (verify.py) prevents lookup-table attacks
+on the public corpus.
+
+The gate is TOLERANCE-based. Tolerance sits between good and bad recipe LPIPS
+scores, calibrated on-box per the spike.
 """
 from dataclasses import dataclass
+
+_lpips = None
+
+
+def _get_lpips():
+    """Lazy-load the frozen LPIPS network (CPU-safe, small)."""
+    global _lpips
+    if _lpips is None:
+        import lpips
+        # net="alex" is the default LPIPS backend (VGG features). Frozen.
+        _lpips = lpips.LPIPS(net="alex")
+        _lpips.eval()
+        for p in _lpips.parameters():
+            p.requires_grad_(False)
+    return _lpips
+
+
+def _normalize(img):
+    """Resize a [1,3,H,W] image (assumed in [0,1]) to LPIPS input (-1,1, 256px)."""
+    import torch
+    import torch.nn.functional as F
+    # LPIPS expects [-1, 1]. Image tensors are stored in [0,1].
+    x = img * 2.0 - 1.0
+    if x.shape[-1] != 256:
+        x = F.interpolate(x, size=(256, 256), mode="bilinear", align_corners=False)
+    return x
 
 
 @dataclass
 class GateConfig:
-    # Multiplier on the measured reference noise floor. The tolerance is
-    # `noise_floor * tolerance_mult`. Spike found good quants at ~3.1x floor
-    # and bad at ~10.3x floor, so ~5-7x cleanly separates them.
-    tolerance_mult: float = 6.0
-    noise_floor: float = 0.0012  # measured on A100, Qwen-Image-2512, 4 steps
+    # LPIPS tolerance between good and bad recipes. Good recipes (quant or
+    # distilled) score ~0.0-0.15; collapsed/broken recipes score much higher.
+    # Calibrated on-box during the spike; this is the initial default.
+    tolerance: float = 0.30
 
 
-def mean_abs_diff(a, b):
-    """Mean absolute difference between two tensors (CPU floats)."""
-    return (a - b).abs().mean().item()
+def image_distance(sub_img, ref_img) -> float:
+    """LPIPS perceptual distance between two [1,3,H,W] image tensors ([0,1])."""
+    net = _get_lpips()
+    a = _normalize(sub_img)
+    b = _normalize(ref_img)
+    with __import__("torch").no_grad():
+        return float(net(a, b).item())
 
 
-def per_probe_distance(submission_preds, ref_preds):
-    """Mean per-step abs diff between a submission's predictions and the ref."""
-    n = min(len(submission_preds), len(ref_preds))
-    if n == 0:
-        return float("inf")
-    return sum(mean_abs_diff(a, b)
-               for a, b in zip(submission_preds, ref_preds)) / n
-
-
-def gate(config: GateConfig, submission_preds, ref_preds) -> tuple[bool, float]:
-    """Return (passes, distance). Passes if distance <= noise_floor * mult."""
-    d = per_probe_distance(submission_preds, ref_preds)
-    tol = config.noise_floor * config.tolerance_mult
-    return (d <= tol), d
+def gate(config: GateConfig, sub_img, ref_img) -> tuple[bool, float]:
+    """Return (passes, lpips_distance). Passes if distance <= tolerance."""
+    d = image_distance(sub_img, ref_img)
+    return (d <= config.tolerance), d

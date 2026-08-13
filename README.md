@@ -24,17 +24,22 @@ Any part of the stack is a legitimate lever:
 
 ## The quality floor (the gate)
 
-A recipe must reproduce the reference's per-step velocity predictions within a
-distance tolerance on fixed (prompt, seed) probes. This is a deterministic,
-model-free comparison — the reference model's own output is the floor, so a
-recipe that trades quality for speed (skipped steps, collapsed output) fails
-the gate regardless of how fast it is.
+A recipe must reproduce the reference's **final image** within a perceptual
+(LPIPS) distance tolerance on fixed (prompt, seed) probes. This is a
+deterministic, frozen, model-free comparison — a recipe that trades quality
+for speed (skipped steps, collapsed output) fails the gate regardless of how
+fast it is.
 
-The gate is tolerance-based, not bit-exact: BF16 on a GPU is bit-identical
-back-to-back but drifts ~1e-3 per-step across runs (CuBLAS / memory-layout
-nondeterminism). Measured on an A100-80GB over 6 probes / 4 steps, good
-recipes sit ~3.1x above the noise floor and collapsed ones ~10.3x — a 6x
-tolerance cleanly separates them (bad/good ratio 3.3x).
+The gate compares *final images*, not per-step predictions. This is what lets
+the competition reward **distillation** alongside quantization: a distilled
+4-step model legitimately predicts differently at each step (a per-step gate
+rejects it by ~210x even though its output image is good), but reaches a
+perceptually close final image. Output-fidelity is the only gate that accepts
+both legitimate speed levers while still rejecting collapsed recipes.
+
+The gate is tolerance-based (LPIPS threshold), calibrated on-box to sit between
+good and bad recipes. LPIPS is a frozen, non-trainable network — not an LLM/VLM
+judge and not trained on the eval corpus.
 
 ## Reference model (verified from source, 2026-08-13)
 
@@ -48,9 +53,9 @@ tolerance cleanly separates them (bad/good ratio 3.3x).
 
 ## Eval
 
-- **Gate:** per-step velocity-prediction distance vs the reference over the
-  public (prompt, seed) corpus. ~2s per probe, so N=1000+ probes per
-  submission is cheap.
+- **Gate:** LPIPS distance between the submission's final image and the
+  reference's final image over the public (prompt, seed) corpus. Frozen,
+  deterministic, no judge in the loop.
 - **Race:** wall-clock seconds per image at fixed resolution/steps, measured
   on the same RTX 5090 box for every submission (same-box, no cross-box
   variance). Two-sided guard: implausibly-fast and underclaiming runs are

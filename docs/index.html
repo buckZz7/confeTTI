@@ -269,22 +269,23 @@ footer{border-top:1px solid var(--border-subtle);padding:48px 24px 64px;margin-t
     <div class="sticky">
       <div class="sec-label">The quality floor</div>
       <h2 class="sec-title">Speed is only the race. Fidelity is the gate.</h2>
-      <p class="sec-body">A recipe must reproduce the reference's per-step velocity predictions within a distance tolerance on fixed (prompt, seed) probes. This is a deterministic, model-free comparison — the reference model's own output is the floor, so a recipe that trades quality for speed (skipped steps, collapsed output) fails the gate regardless of how fast it is.</p>
+      <p class="sec-body">A recipe must reproduce the reference's <strong>final image</strong> within a perceptual (LPIPS) distance tolerance on fixed (prompt, seed) probes. A recipe that trades quality for speed — skipped steps, collapsed output — fails the gate regardless of how fast it is.</p>
+      <p class="sec-body" style="margin-top:16px;font-size:15px">The gate compares <strong>final images</strong>, not per-step predictions. That's what lets the competition reward distillation alongside quantization — a distilled 4-step model reaches a perceptually close image even though its per-step path differs. Output-fidelity accepts both legitimate speed levers while still rejecting collapsed recipes.</p>
     </div>
     <div>
       <div class="spec-wrap">
         <table class="spec">
           <thead>
-            <tr><th>Measurement</th><th>Per-step dist vs ref</th><th>vs noise floor</th></tr>
+            <tr><th>Recipe type</th><th>LPIPS vs ref</th><th>Gate result</th></tr>
           </thead>
           <tbody>
-            <tr><td>Noise floor (ref vs ref)</td><td class="val">0.0012</td><td class="val">1.0x</td></tr>
-            <tr><td>Good recipe</td><td class="val">0.0038</td><td class="val">3.1x</td></tr>
-            <tr><td>Collapsed recipe</td><td class="val">0.0126</td><td class="val">10.3x</td></tr>
+            <tr><td>Reference (ref vs ref)</td><td class="val">~0.00</td><td class="val good">pass</td></tr>
+            <tr><td>Good quant / distilled</td><td class="val">low</td><td class="val good">pass</td></tr>
+            <tr><td>Collapsed recipe</td><td class="val">high</td><td class="val">fail</td></tr>
           </tbody>
         </table>
       </div>
-      <p class="sec-body" style="margin-top:20px;font-size:15px">bad/good ratio <strong style="color:var(--ink)">3.3x</strong> — a 6x tolerance cleanly separates good recipes from collapsed ones. The gate is tolerance-based, not bit-exact: BF16 is bit-identical back-to-back but drifts ~1e-3 per-step across runs (CuBLAS / memory-layout nondeterminism).</p>
+      <p class="sec-body" style="margin-top:20px;font-size:15px">Tolerance is a <strong style="color:var(--ink)">LPIPS threshold</strong> between good and bad recipes, calibrated on-box. LPIPS is a frozen, non-trainable network — deterministic, no judge in the loop.</p>
     </div>
   </div>
 </section>

@@ -5,13 +5,13 @@ Evaluates a submission (a model + runtime recipe) against the immutable
 reference:
 
   1. Anti-memorization intake check (real loadable model + seed-dependence).
-  2. Fidelity gate: per-step velocity predictions within tolerance of the
-     reference over the public corpus.
+  2. Output-fidelity gate: final image within LPIPS tolerance of the
+     reference's final image over the public corpus.
   3. Speed: wall-clock seconds per image on the eval box.
 
 The scoring core (`score_submission`) is decoupled from the GPU runner so it is
 testable without a GPU — tests inject a fake probe runner that returns canned
-per-step predictions.
+image tensors.
 """
 import os
 import time
@@ -26,38 +26,36 @@ from .reference import load_reference, DEFAULT_HEIGHT, DEFAULT_WIDTH, DEFAULT_ST
 from .verify import check_real_model
 
 
-def score_submission(probe_runner, ref_tensors, probe_keys, gate_cfg=None,
-                     timer=None):
-    """Score a submission given a probe_runner that returns per-step preds.
+def score_submission(probe_runner, ref_images, probe_keys, gate_cfg=None):
+    """Score a submission given a probe_runner that returns final images.
 
-    probe_runner(key) -> list[torch.Tensor]  (per-step velocity predictions)
-    ref_tensors: {key: list[torch.Tensor]} from the reference
+    probe_runner(key) -> torch.Tensor  ([1,3,H,W] image in [0,1])
+    ref_images: {key: image tensor} from the reference
     probe_keys: canonical probe keys to evaluate over
 
-    Returns a result dict: passes_gate, distance, tolerance, probes_evaluated,
-    total_time_s.
+    Returns a result dict: passes_gate, mean_distance, tolerance,
+    probes_evaluated, probes_total, gate_time_s.
     """
     gate_cfg = gate_cfg or GateConfig()
     distances = []
     n_probes = len(probe_keys)
     start = time.time()
     for key in probe_keys:
-        if key not in ref_tensors:
+        if key not in ref_images:
             continue
-        sub_preds = probe_runner(key)
-        ref_preds = ref_tensors[key]
-        ok, d = gate(gate_cfg, sub_preds, ref_preds)
+        sub_img = probe_runner(key)
+        ref_img = ref_images[key]
+        ok, d = gate(gate_cfg, sub_img, ref_img)
         distances.append(d)
     total = time.time() - start
 
     mean_d = (sum(distances) / len(distances)) if distances else float("inf")
-    tol = gate_cfg.noise_floor * gate_cfg.tolerance_mult
-    passes = mean_d <= tol if distances else False
+    passes = mean_d <= gate_cfg.tolerance if distances else False
 
     return {
         "passes_gate": passes,
-        "mean_distance": round(mean_d, 6),
-        "tolerance": round(tol, 6),
+        "mean_distance": round(mean_d, 5),
+        "tolerance": gate_cfg.tolerance,
         "probes_evaluated": len(distances),
         "probes_total": n_probes,
         "gate_time_s": round(total, 2),
@@ -67,8 +65,8 @@ def score_submission(probe_runner, ref_tensors, probe_keys, gate_cfg=None,
 def build_probe_runner(pipe, device, timesteps, height, width, seeds, prompts):
     """GPU probe runner: run the submission model over each (seed, prompt) probe.
 
-    Returns a closure probe_runner(key) -> list[tensor] and a speed_runner(key)
-    that also returns wall-clock time.
+    Returns a closure probe_runner(key) -> final image tensor, and a
+    speed_runner(key) -> wall-clock seconds.
     """
     from .reference import run_steps
     cache = {}
@@ -76,9 +74,9 @@ def build_probe_runner(pipe, device, timesteps, height, width, seeds, prompts):
     def runner(key):
         seed_str, prompt = key.split(":", 1)
         seed = int(seed_str)
-        preds, _ = run_steps(pipe, prompt, seed, device, timesteps,
-                             height=height, width=width, encode_cache=cache)
-        return preds
+        preds, _, image = run_steps(pipe, prompt, seed, device, timesteps,
+                                    height=height, width=width, encode_cache=cache)
+        return image
 
     def speed_runner(key):
         seed_str, prompt = key.split(":", 1)
@@ -92,11 +90,7 @@ def build_probe_runner(pipe, device, timesteps, height, width, seeds, prompts):
 
 
 def measure_speed(speed_runner, probe_keys, warmup=1, runs=3):
-    """Wall-clock seconds per image, median across probes after warmup.
-
-    warmup: number of probe runs to discard (compile/first-touch).
-    runs: number of timed repetitions per probe; median is used.
-    """
+    """Wall-clock seconds per image, median across probes after warmup."""
     for _ in range(warmup):
         speed_runner(probe_keys[0])
 
@@ -123,7 +117,7 @@ def run_eval(submission_path, reference_dir, device="cuda",
     if not check_real_model(submission_path):
         return {"passes_gate": False, "error": "not a real loadable model"}
 
-    manifest, ref_tensors = load_reference(reference_dir)
+    manifest, tensors, ref_images = load_reference(reference_dir)
     probe_keys = list(manifest["probes"].keys())
     timesteps = [torch.tensor(t, dtype=torch.float32) for t in manifest["timesteps"]]
 
@@ -136,7 +130,7 @@ def run_eval(submission_path, reference_dir, device="cuda",
     )
 
     # 3. Gate.
-    result = score_submission(runner, ref_tensors, probe_keys)
+    result = score_submission(runner, ref_images, probe_keys)
     if not result["passes_gate"]:
         result["speed"] = None
         return result
