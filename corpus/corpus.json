@@ -1,0 +1,922 @@
+{
+  "version": 1,
+  "seed_formula": {
+    "prime_a": 2654435761,
+    "prime_b": 1597334677
+  },
+  "steps": 28,
+  "seeds_per_prompt": 4,
+  "domains": {
+    "photoreal_natural": 25,
+    "photoreal_human": 10,
+    "text_in_image": 10,
+    "stylized_illustrative": 20,
+    "scene_composition": 15,
+    "abstract_texture": 10,
+    "challenging_rare": 10
+  },
+  "prompts": [
+    {
+      "id": 0,
+      "domain": "photoreal_natural",
+      "text": "A red fox in a snowy forest, golden hour light, photorealistic, 35mm"
+    },
+    {
+      "id": 1,
+      "domain": "photoreal_natural",
+      "text": "Moss-covered cliffs above a crashing ocean at dusk, photoreal"
+    },
+    {
+      "id": 2,
+      "domain": "photoreal_natural",
+      "text": "A macro shot of a dragonfly resting on a dewy leaf, sharp focus"
+    },
+    {
+      "id": 3,
+      "domain": "photoreal_natural",
+      "text": "Rolling fog over a mountain valley at sunrise, aerial photoreal"
+    },
+    {
+      "id": 4,
+      "domain": "photoreal_natural",
+      "text": "A wolf in a pine forest during a snowstorm, cinematic photoreal"
+    },
+    {
+      "id": 5,
+      "domain": "photoreal_natural",
+      "text": "A red fox in a snowy forest, golden hour light, photorealistic, 35mm"
+    },
+    {
+      "id": 6,
+      "domain": "photoreal_natural",
+      "text": "Moss-covered cliffs above a crashing ocean at dusk, photoreal"
+    },
+    {
+      "id": 7,
+      "domain": "photoreal_natural",
+      "text": "A macro shot of a dragonfly resting on a dewy leaf, sharp focus"
+    },
+    {
+      "id": 8,
+      "domain": "photoreal_natural",
+      "text": "Rolling fog over a mountain valley at sunrise, aerial photoreal"
+    },
+    {
+      "id": 9,
+      "domain": "photoreal_natural",
+      "text": "A wolf in a pine forest during a snowstorm, cinematic photoreal"
+    },
+    {
+      "id": 10,
+      "domain": "photoreal_natural",
+      "text": "A red fox in a snowy forest, golden hour light, photorealistic, 35mm"
+    },
+    {
+      "id": 11,
+      "domain": "photoreal_natural",
+      "text": "Moss-covered cliffs above a crashing ocean at dusk, photoreal"
+    },
+    {
+      "id": 12,
+      "domain": "photoreal_natural",
+      "text": "A macro shot of a dragonfly resting on a dewy leaf, sharp focus"
+    },
+    {
+      "id": 13,
+      "domain": "photoreal_natural",
+      "text": "Rolling fog over a mountain valley at sunrise, aerial photoreal"
+    },
+    {
+      "id": 14,
+      "domain": "photoreal_natural",
+      "text": "A wolf in a pine forest during a snowstorm, cinematic photoreal"
+    },
+    {
+      "id": 15,
+      "domain": "photoreal_natural",
+      "text": "A red fox in a snowy forest, golden hour light, photorealistic, 35mm"
+    },
+    {
+      "id": 16,
+      "domain": "photoreal_natural",
+      "text": "Moss-covered cliffs above a crashing ocean at dusk, photoreal"
+    },
+    {
+      "id": 17,
+      "domain": "photoreal_natural",
+      "text": "A macro shot of a dragonfly resting on a dewy leaf, sharp focus"
+    },
+    {
+      "id": 18,
+      "domain": "photoreal_natural",
+      "text": "Rolling fog over a mountain valley at sunrise, aerial photoreal"
+    },
+    {
+      "id": 19,
+      "domain": "photoreal_natural",
+      "text": "A wolf in a pine forest during a snowstorm, cinematic photoreal"
+    },
+    {
+      "id": 20,
+      "domain": "photoreal_natural",
+      "text": "A red fox in a snowy forest, golden hour light, photorealistic, 35mm"
+    },
+    {
+      "id": 21,
+      "domain": "photoreal_natural",
+      "text": "Moss-covered cliffs above a crashing ocean at dusk, photoreal"
+    },
+    {
+      "id": 22,
+      "domain": "photoreal_natural",
+      "text": "A macro shot of a dragonfly resting on a dewy leaf, sharp focus"
+    },
+    {
+      "id": 23,
+      "domain": "photoreal_natural",
+      "text": "Rolling fog over a mountain valley at sunrise, aerial photoreal"
+    },
+    {
+      "id": 24,
+      "domain": "photoreal_natural",
+      "text": "A wolf in a pine forest during a snowstorm, cinematic photoreal"
+    },
+    {
+      "id": 25,
+      "domain": "photoreal_human",
+      "text": "A portrait of an elderly fisherman with weathered skin, studio light"
+    },
+    {
+      "id": 26,
+      "domain": "photoreal_human",
+      "text": "A candid photo of a street performer in a city plaza, mid-day"
+    },
+    {
+      "id": 27,
+      "domain": "photoreal_human",
+      "text": "An athlete mid-stride at a track meet, frozen motion, photoreal"
+    },
+    {
+      "id": 28,
+      "domain": "photoreal_human",
+      "text": "A child laughing while flying a kite in a park, golden light"
+    },
+    {
+      "id": 29,
+      "domain": "photoreal_human",
+      "text": "A professional headshot of a woman in a navy blazer, soft key light"
+    },
+    {
+      "id": 30,
+      "domain": "photoreal_human",
+      "text": "A portrait of an elderly fisherman with weathered skin, studio light"
+    },
+    {
+      "id": 31,
+      "domain": "photoreal_human",
+      "text": "A candid photo of a street performer in a city plaza, mid-day"
+    },
+    {
+      "id": 32,
+      "domain": "photoreal_human",
+      "text": "An athlete mid-stride at a track meet, frozen motion, photoreal"
+    },
+    {
+      "id": 33,
+      "domain": "photoreal_human",
+      "text": "A child laughing while flying a kite in a park, golden light"
+    },
+    {
+      "id": 34,
+      "domain": "photoreal_human",
+      "text": "A professional headshot of a woman in a navy blazer, soft key light"
+    },
+    {
+      "id": 35,
+      "domain": "text_in_image",
+      "text": "A vintage neon sign reading 'CAFE' on a rainy night street"
+    },
+    {
+      "id": 36,
+      "domain": "text_in_image",
+      "text": "A poster with the text 'CONFETTI' in bold serif on a dark wall"
+    },
+    {
+      "id": 37,
+      "domain": "text_in_image",
+      "text": "An open book with the title 'THE BEGINNING' on its cover, overhead"
+    },
+    {
+      "id": 38,
+      "domain": "text_in_image",
+      "text": "A storefront awning that says 'BAKERY' in white on red, day"
+    },
+    {
+      "id": 39,
+      "domain": "text_in_image",
+      "text": "A chalkboard menu board with the word 'SPECIALS' hand-lettered"
+    },
+    {
+      "id": 40,
+      "domain": "text_in_image",
+      "text": "A vintage neon sign reading 'CAFE' on a rainy night street"
+    },
+    {
+      "id": 41,
+      "domain": "text_in_image",
+      "text": "A poster with the text 'CONFETTI' in bold serif on a dark wall"
+    },
+    {
+      "id": 42,
+      "domain": "text_in_image",
+      "text": "An open book with the title 'THE BEGINNING' on its cover, overhead"
+    },
+    {
+      "id": 43,
+      "domain": "text_in_image",
+      "text": "A storefront awning that says 'BAKERY' in white on red, day"
+    },
+    {
+      "id": 44,
+      "domain": "text_in_image",
+      "text": "A chalkboard menu board with the word 'SPECIALS' hand-lettered"
+    },
+    {
+      "id": 45,
+      "domain": "stylized_illustrative",
+      "text": "A watercolor illustration of a whale breaching at sunset"
+    },
+    {
+      "id": 46,
+      "domain": "stylized_illustrative",
+      "text": "A flat vector illustration of a mountain town, bold colors"
+    },
+    {
+      "id": 47,
+      "domain": "stylized_illustrative",
+      "text": "A retro sci-fi book cover illustration of a space station, 1980s"
+    },
+    {
+      "id": 48,
+      "domain": "stylized_illustrative",
+      "text": "A children's book illustration of a friendly dragon in a meadow"
+    },
+    {
+      "id": 49,
+      "domain": "stylized_illustrative",
+      "text": "An anime-style illustration of a girl with a glowing umbrella at night"
+    },
+    {
+      "id": 50,
+      "domain": "stylized_illustrative",
+      "text": "A watercolor illustration of a whale breaching at sunset"
+    },
+    {
+      "id": 51,
+      "domain": "stylized_illustrative",
+      "text": "A flat vector illustration of a mountain town, bold colors"
+    },
+    {
+      "id": 52,
+      "domain": "stylized_illustrative",
+      "text": "A retro sci-fi book cover illustration of a space station, 1980s"
+    },
+    {
+      "id": 53,
+      "domain": "stylized_illustrative",
+      "text": "A children's book illustration of a friendly dragon in a meadow"
+    },
+    {
+      "id": 54,
+      "domain": "stylized_illustrative",
+      "text": "An anime-style illustration of a girl with a glowing umbrella at night"
+    },
+    {
+      "id": 55,
+      "domain": "stylized_illustrative",
+      "text": "A watercolor illustration of a whale breaching at sunset"
+    },
+    {
+      "id": 56,
+      "domain": "stylized_illustrative",
+      "text": "A flat vector illustration of a mountain town, bold colors"
+    },
+    {
+      "id": 57,
+      "domain": "stylized_illustrative",
+      "text": "A retro sci-fi book cover illustration of a space station, 1980s"
+    },
+    {
+      "id": 58,
+      "domain": "stylized_illustrative",
+      "text": "A children's book illustration of a friendly dragon in a meadow"
+    },
+    {
+      "id": 59,
+      "domain": "stylized_illustrative",
+      "text": "An anime-style illustration of a girl with a glowing umbrella at night"
+    },
+    {
+      "id": 60,
+      "domain": "stylized_illustrative",
+      "text": "A watercolor illustration of a whale breaching at sunset"
+    },
+    {
+      "id": 61,
+      "domain": "stylized_illustrative",
+      "text": "A flat vector illustration of a mountain town, bold colors"
+    },
+    {
+      "id": 62,
+      "domain": "stylized_illustrative",
+      "text": "A retro sci-fi book cover illustration of a space station, 1980s"
+    },
+    {
+      "id": 63,
+      "domain": "stylized_illustrative",
+      "text": "A children's book illustration of a friendly dragon in a meadow"
+    },
+    {
+      "id": 64,
+      "domain": "stylized_illustrative",
+      "text": "An anime-style illustration of a girl with a glowing umbrella at night"
+    },
+    {
+      "id": 65,
+      "domain": "scene_composition",
+      "text": "A busy farmers market with stalls, people, and produce, wide shot"
+    },
+    {
+      "id": 66,
+      "domain": "scene_composition",
+      "text": "A living room with a fireplace, reading chair, and bookshelves"
+    },
+    {
+      "id": 67,
+      "domain": "scene_composition",
+      "text": "A city skyline at blue hour with a river and bridges"
+    },
+    {
+      "id": 68,
+      "domain": "scene_composition",
+      "text": "An ornate temple courtyard with lanterns and koi pond, symmetrical"
+    },
+    {
+      "id": 69,
+      "domain": "scene_composition",
+      "text": "A crowded train station platform at rush hour, dynamic composition"
+    },
+    {
+      "id": 70,
+      "domain": "scene_composition",
+      "text": "A busy farmers market with stalls, people, and produce, wide shot"
+    },
+    {
+      "id": 71,
+      "domain": "scene_composition",
+      "text": "A living room with a fireplace, reading chair, and bookshelves"
+    },
+    {
+      "id": 72,
+      "domain": "scene_composition",
+      "text": "A city skyline at blue hour with a river and bridges"
+    },
+    {
+      "id": 73,
+      "domain": "scene_composition",
+      "text": "An ornate temple courtyard with lanterns and koi pond, symmetrical"
+    },
+    {
+      "id": 74,
+      "domain": "scene_composition",
+      "text": "A crowded train station platform at rush hour, dynamic composition"
+    },
+    {
+      "id": 75,
+      "domain": "scene_composition",
+      "text": "A busy farmers market with stalls, people, and produce, wide shot"
+    },
+    {
+      "id": 76,
+      "domain": "scene_composition",
+      "text": "A living room with a fireplace, reading chair, and bookshelves"
+    },
+    {
+      "id": 77,
+      "domain": "scene_composition",
+      "text": "A city skyline at blue hour with a river and bridges"
+    },
+    {
+      "id": 78,
+      "domain": "scene_composition",
+      "text": "An ornate temple courtyard with lanterns and koi pond, symmetrical"
+    },
+    {
+      "id": 79,
+      "domain": "scene_composition",
+      "text": "A crowded train station platform at rush hour, dynamic composition"
+    },
+    {
+      "id": 80,
+      "domain": "abstract_texture",
+      "text": "Close-up of swirling iridescent oil on water, abstract macro"
+    },
+    {
+      "id": 81,
+      "domain": "abstract_texture",
+      "text": "A fractal-like pattern of concentric glowing rings, dark background"
+    },
+    {
+      "id": 82,
+      "domain": "abstract_texture",
+      "text": "Layered translucent silk in motion, soft gradients, abstract"
+    },
+    {
+      "id": 83,
+      "domain": "abstract_texture",
+      "text": "Geometric concrete architecture shot from below, strong shadows"
+    },
+    {
+      "id": 84,
+      "domain": "abstract_texture",
+      "text": "Rippling sand dunes with sharp ridges at noon, minimal texture"
+    },
+    {
+      "id": 85,
+      "domain": "abstract_texture",
+      "text": "Close-up of swirling iridescent oil on water, abstract macro"
+    },
+    {
+      "id": 86,
+      "domain": "abstract_texture",
+      "text": "A fractal-like pattern of concentric glowing rings, dark background"
+    },
+    {
+      "id": 87,
+      "domain": "abstract_texture",
+      "text": "Layered translucent silk in motion, soft gradients, abstract"
+    },
+    {
+      "id": 88,
+      "domain": "abstract_texture",
+      "text": "Geometric concrete architecture shot from below, strong shadows"
+    },
+    {
+      "id": 89,
+      "domain": "abstract_texture",
+      "text": "Rippling sand dunes with sharp ridges at noon, minimal texture"
+    },
+    {
+      "id": 90,
+      "domain": "challenging_rare",
+      "text": "A platypus wearing a tiny top hat on a surfboard, dramatic light"
+    },
+    {
+      "id": 91,
+      "domain": "challenging_rare",
+      "text": "An impossible Escher-like staircase in a desert landscape"
+    },
+    {
+      "id": 92,
+      "domain": "challenging_rare",
+      "text": "A glass sculpture of a jellyfish in a dark gallery, spotlit"
+    },
+    {
+      "id": 93,
+      "domain": "challenging_rare",
+      "text": "A robotic raccoon repairing a vintage typewriter, cinematic"
+    },
+    {
+      "id": 94,
+      "domain": "challenging_rare",
+      "text": "An aurora over a frozen lake with a lone cabin, ultra-wide"
+    },
+    {
+      "id": 95,
+      "domain": "challenging_rare",
+      "text": "A platypus wearing a tiny top hat on a surfboard, dramatic light"
+    },
+    {
+      "id": 96,
+      "domain": "challenging_rare",
+      "text": "An impossible Escher-like staircase in a desert landscape"
+    },
+    {
+      "id": 97,
+      "domain": "challenging_rare",
+      "text": "A glass sculpture of a jellyfish in a dark gallery, spotlit"
+    },
+    {
+      "id": 98,
+      "domain": "challenging_rare",
+      "text": "A robotic raccoon repairing a vintage typewriter, cinematic"
+    },
+    {
+      "id": 99,
+      "domain": "challenging_rare",
+      "text": "An aurora over a frozen lake with a lone cabin, ultra-wide"
+    }
+  ],
+  "probes": [
+    "0:0",
+    "1597334677:0",
+    "3194669354:0",
+    "497036735:0",
+    "2654435761:1",
+    "4251770438:1",
+    "1554137819:1",
+    "3151472496:1",
+    "1013904226:2",
+    "2611238903:2",
+    "4208573580:2",
+    "1510940961:2",
+    "3668339987:3",
+    "970707368:3",
+    "2568042045:3",
+    "4165376722:3",
+    "2027808452:4",
+    "3625143129:4",
+    "927510510:4",
+    "2524845187:4",
+    "387276917:5",
+    "1984611594:5",
+    "3581946271:5",
+    "884313652:5",
+    "3041712678:6",
+    "344080059:6",
+    "1941414736:6",
+    "3538749413:6",
+    "1401181143:7",
+    "2998515820:7",
+    "300883201:7",
+    "1898217878:7",
+    "4055616904:8",
+    "1357984285:8",
+    "2955318962:8",
+    "257686343:8",
+    "2415085369:9",
+    "4012420046:9",
+    "1314787427:9",
+    "2912122104:9",
+    "774553834:10",
+    "2371888511:10",
+    "3969223188:10",
+    "1271590569:10",
+    "3428989595:11",
+    "731356976:11",
+    "2328691653:11",
+    "3926026330:11",
+    "1788458060:12",
+    "3385792737:12",
+    "688160118:12",
+    "2285494795:12",
+    "147926525:13",
+    "1745261202:13",
+    "3342595879:13",
+    "644963260:13",
+    "2802362286:14",
+    "104729667:14",
+    "1702064344:14",
+    "3299399021:14",
+    "1161830751:15",
+    "2759165428:15",
+    "61532809:15",
+    "1658867486:15",
+    "3816266512:16",
+    "1118633893:16",
+    "2715968570:16",
+    "18335951:16",
+    "2175734977:17",
+    "3773069654:17",
+    "1075437035:17",
+    "2672771712:17",
+    "535203442:18",
+    "2132538119:18",
+    "3729872796:18",
+    "1032240177:18",
+    "3189639203:19",
+    "492006584:19",
+    "2089341261:19",
+    "3686675938:19",
+    "1549107668:20",
+    "3146442345:20",
+    "448809726:20",
+    "2046144403:20",
+    "4203543429:21",
+    "1505910810:21",
+    "3103245487:21",
+    "405612868:21",
+    "2563011894:22",
+    "4160346571:22",
+    "1462713952:22",
+    "3060048629:22",
+    "922480359:23",
+    "2519815036:23",
+    "4117149713:23",
+    "1419517094:23",
+    "3576916120:24",
+    "879283501:24",
+    "2476618178:24",
+    "4073952855:24",
+    "1936384585:25",
+    "3533719262:25",
+    "836086643:25",
+    "2433421320:25",
+    "295853050:26",
+    "1893187727:26",
+    "3490522404:26",
+    "792889785:26",
+    "2950288811:27",
+    "252656192:27",
+    "1849990869:27",
+    "3447325546:27",
+    "1309757276:28",
+    "2907091953:28",
+    "209459334:28",
+    "1806794011:28",
+    "3964193037:29",
+    "1266560418:29",
+    "2863895095:29",
+    "166262476:29",
+    "2323661502:30",
+    "3920996179:30",
+    "1223363560:30",
+    "2820698237:30",
+    "683129967:31",
+    "2280464644:31",
+    "3877799321:31",
+    "1180166702:31",
+    "3337565728:32",
+    "639933109:32",
+    "2237267786:32",
+    "3834602463:32",
+    "1697034193:33",
+    "3294368870:33",
+    "596736251:33",
+    "2194070928:33",
+    "56502658:34",
+    "1653837335:34",
+    "3251172012:34",
+    "553539393:34",
+    "2710938419:35",
+    "13305800:35",
+    "1610640477:35",
+    "3207975154:35",
+    "1070406884:36",
+    "2667741561:36",
+    "4265076238:36",
+    "1567443619:36",
+    "3724842645:37",
+    "1027210026:37",
+    "2624544703:37",
+    "4221879380:37",
+    "2084311110:38",
+    "3681645787:38",
+    "984013168:38",
+    "2581347845:38",
+    "443779575:39",
+    "2041114252:39",
+    "3638448929:39",
+    "940816310:39",
+    "3098215336:40",
+    "400582717:40",
+    "1997917394:40",
+    "3595252071:40",
+    "1457683801:41",
+    "3055018478:41",
+    "357385859:41",
+    "1954720536:41",
+    "4112119562:42",
+    "1414486943:42",
+    "3011821620:42",
+    "314189001:42",
+    "2471588027:43",
+    "4068922704:43",
+    "1371290085:43",
+    "2968624762:43",
+    "831056492:44",
+    "2428391169:44",
+    "4025725846:44",
+    "1328093227:44",
+    "3485492253:45",
+    "787859634:45",
+    "2385194311:45",
+    "3982528988:45",
+    "1844960718:46",
+    "3442295395:46",
+    "744662776:46",
+    "2341997453:46",
+    "204429183:47",
+    "1801763860:47",
+    "3399098537:47",
+    "701465918:47",
+    "2858864944:48",
+    "161232325:48",
+    "1758567002:48",
+    "3355901679:48",
+    "1218333409:49",
+    "2815668086:49",
+    "118035467:49",
+    "1715370144:49",
+    "3872769170:50",
+    "1175136551:50",
+    "2772471228:50",
+    "74838609:50",
+    "2232237635:51",
+    "3829572312:51",
+    "1131939693:51",
+    "2729274370:51",
+    "591706100:52",
+    "2189040777:52",
+    "3786375454:52",
+    "1088742835:52",
+    "3246141861:53",
+    "548509242:53",
+    "2145843919:53",
+    "3743178596:53",
+    "1605610326:54",
+    "3202945003:54",
+    "505312384:54",
+    "2102647061:54",
+    "4260046087:55",
+    "1562413468:55",
+    "3159748145:55",
+    "462115526:55",
+    "2619514552:56",
+    "4216849229:56",
+    "1519216610:56",
+    "3116551287:56",
+    "978983017:57",
+    "2576317694:57",
+    "4173652371:57",
+    "1476019752:57",
+    "3633418778:58",
+    "935786159:58",
+    "2533120836:58",
+    "4130455513:58",
+    "1992887243:59",
+    "3590221920:59",
+    "892589301:59",
+    "2489923978:59",
+    "352355708:60",
+    "1949690385:60",
+    "3547025062:60",
+    "849392443:60",
+    "3006791469:61",
+    "309158850:61",
+    "1906493527:61",
+    "3503828204:61",
+    "1366259934:62",
+    "2963594611:62",
+    "265961992:62",
+    "1863296669:62",
+    "4020695695:63",
+    "1323063076:63",
+    "2920397753:63",
+    "222765134:63",
+    "2380164160:64",
+    "3977498837:64",
+    "1279866218:64",
+    "2877200895:64",
+    "739632625:65",
+    "2336967302:65",
+    "3934301979:65",
+    "1236669360:65",
+    "3394068386:66",
+    "696435767:66",
+    "2293770444:66",
+    "3891105121:66",
+    "1753536851:67",
+    "3350871528:67",
+    "653238909:67",
+    "2250573586:67",
+    "113005316:68",
+    "1710339993:68",
+    "3307674670:68",
+    "610042051:68",
+    "2767441077:69",
+    "69808458:69",
+    "1667143135:69",
+    "3264477812:69",
+    "1126909542:70",
+    "2724244219:70",
+    "26611600:70",
+    "1623946277:70",
+    "3781345303:71",
+    "1083712684:71",
+    "2681047361:71",
+    "4278382038:71",
+    "2140813768:72",
+    "3738148445:72",
+    "1040515826:72",
+    "2637850503:72",
+    "500282233:73",
+    "2097616910:73",
+    "3694951587:73",
+    "997318968:73",
+    "3154717994:74",
+    "457085375:74",
+    "2054420052:74",
+    "3651754729:74",
+    "1514186459:75",
+    "3111521136:75",
+    "413888517:75",
+    "2011223194:75",
+    "4168622220:76",
+    "1470989601:76",
+    "3068324278:76",
+    "370691659:76",
+    "2528090685:77",
+    "4125425362:77",
+    "1427792743:77",
+    "3025127420:77",
+    "887559150:78",
+    "2484893827:78",
+    "4082228504:78",
+    "1384595885:78",
+    "3541994911:79",
+    "844362292:79",
+    "2441696969:79",
+    "4039031646:79",
+    "1901463376:80",
+    "3498798053:80",
+    "801165434:80",
+    "2398500111:80",
+    "260931841:81",
+    "1858266518:81",
+    "3455601195:81",
+    "757968576:81",
+    "2915367602:82",
+    "217734983:82",
+    "1815069660:82",
+    "3412404337:82",
+    "1274836067:83",
+    "2872170744:83",
+    "174538125:83",
+    "1771872802:83",
+    "3929271828:84",
+    "1231639209:84",
+    "2828973886:84",
+    "131341267:84",
+    "2288740293:85",
+    "3886074970:85",
+    "1188442351:85",
+    "2785777028:85",
+    "648208758:86",
+    "2245543435:86",
+    "3842878112:86",
+    "1145245493:86",
+    "3302644519:87",
+    "605011900:87",
+    "2202346577:87",
+    "3799681254:87",
+    "1662112984:88",
+    "3259447661:88",
+    "561815042:88",
+    "2159149719:88",
+    "21581449:89",
+    "1618916126:89",
+    "3216250803:89",
+    "518618184:89",
+    "2676017210:90",
+    "4273351887:90",
+    "1575719268:90",
+    "3173053945:90",
+    "1035485675:91",
+    "2632820352:91",
+    "4230155029:91",
+    "1532522410:91",
+    "3689921436:92",
+    "992288817:92",
+    "2589623494:92",
+    "4186958171:92",
+    "2049389901:93",
+    "3646724578:93",
+    "949091959:93",
+    "2546426636:93",
+    "408858366:94",
+    "2006193043:94",
+    "3603527720:94",
+    "905895101:94",
+    "3063294127:95",
+    "365661508:95",
+    "1962996185:95",
+    "3560330862:95",
+    "1422762592:96",
+    "3020097269:96",
+    "322464650:96",
+    "1919799327:96",
+    "4077198353:97",
+    "1379565734:97",
+    "2976900411:97",
+    "279267792:97",
+    "2436666818:98",
+    "4034001495:98",
+    "1336368876:98",
+    "2933703553:98",
+    "796135283:99",
+    "2393469960:99",
+    "3990804637:99",
+    "1293172018:99"
+  ]
+}
