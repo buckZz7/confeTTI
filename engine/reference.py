@@ -47,6 +47,8 @@ def run_steps(pipe, prompt, seed, device, timesteps, height=DEFAULT_HEIGHT,
     transformer(hidden_states, timestep=t/1000 on device, encoder_hidden_states,
     encoder_hidden_states_mask, img_shapes), scheduler.step.
     """
+    import numpy as np
+    from diffusers.pipelines.qwenimage.pipeline_qwenimage import calculate_shift
     if encode_cache is not None and prompt in encode_cache:
         emb, emb_mask = encode_cache[prompt]
     else:
@@ -59,9 +61,22 @@ def run_steps(pipe, prompt, seed, device, timesteps, height=DEFAULT_HEIGHT,
     )
     img_shapes = [[(1, height // pipe.vae_scale_factor // 2,
                     width // pipe.vae_scale_factor // 2)]] * 1
+    # Set the scheduler with mu + sigmas (pipeline setup) so scheduler.step
+    # can resolve the timestep indices.
+    n_steps = len(timesteps)
+    image_seq_len = latents.shape[1]
+    mu = calculate_shift(
+        image_seq_len,
+        pipe.scheduler.config.get("base_image_seq_len", 256),
+        pipe.scheduler.config.get("max_image_seq_len", 4096),
+        pipe.scheduler.config.get("base_shift", 0.5),
+        pipe.scheduler.config.get("max_shift", 1.15),
+    )
+    sigmas = np.linspace(1.0, 1 / n_steps, n_steps)
+    pipe.scheduler.set_timesteps(n_steps, sigmas=sigmas, mu=mu, device=device)
     preds = []
     with torch.no_grad():
-        for t in timesteps:
+        for t in pipe.scheduler.timesteps:
             timestep = t.expand(latents.shape[0]).to(
                 device=latents.device, dtype=latents.dtype) / 1000
             pred = pipe.transformer(
@@ -77,8 +92,16 @@ def run_steps(pipe, prompt, seed, device, timesteps, height=DEFAULT_HEIGHT,
     final_lat = latents.float().detach().cpu()
     if decode:
         with torch.no_grad():
-            image = pipe.vae.decode(latents / pipe.vae.config.scaling_factor,
-                                    return_dict=False)[0]
+            # Replicate the pipeline's decode: unpack packed latents, apply
+            # latents_mean/std normalization, decode 5D, slice the frame.
+            lat = pipe._unpack_latents(latents, height, width, pipe.vae_scale_factor)
+            lat = lat.to(pipe.vae.dtype)
+            mean = (torch.tensor(pipe.vae.config.latents_mean)
+                    .view(1, pipe.vae.config.z_dim, 1, 1, 1).to(lat.device, lat.dtype))
+            std = 1.0 / torch.tensor(pipe.vae.config.latents_std) \
+                .view(1, pipe.vae.config.z_dim, 1, 1, 1).to(lat.device, lat.dtype)
+            lat = lat / std + mean
+            image = pipe.vae.decode(lat, return_dict=False)[0][:, :, 0]
             image = (image / 2 + 0.5).clamp(0, 1).float().cpu()
         return preds, final_lat, image
     return preds, final_lat, None

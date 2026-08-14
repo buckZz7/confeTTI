@@ -52,10 +52,10 @@ def _normalize(img):
 
 @dataclass
 class GateConfig:
-    # LPIPS tolerance between good and bad recipes. Good recipes (quant or
-    # distilled) score ~0.0-0.15; collapsed/broken recipes score much higher.
-    # Calibrated on-box during the spike; this is the initial default.
-    tolerance: float = 0.30
+    # LPIPS tolerance between good and bad recipes. Calibrated on an A100-80GB
+    # (2026-08-13): ref-vs-ref 0.000, good distilled (Lightning) 0.487,
+    # collapsed (corrupted) 1.194. 0.85 sits between with ~0.36 margin each way.
+    tolerance: float = 0.85
 
 
 def image_distance(sub_img, ref_img) -> float:

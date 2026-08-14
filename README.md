@@ -37,9 +37,12 @@ rejects it by ~210x even though its output image is good), but reaches a
 perceptually close final image. Output-fidelity is the only gate that accepts
 both legitimate speed levers while still rejecting collapsed recipes.
 
-The gate is tolerance-based (LPIPS threshold), calibrated on-box to sit between
-good and bad recipes. LPIPS is a frozen, non-trainable network — not an LLM/VLM
-judge and not trained on the eval corpus.
+The gate is tolerance-based (LPIPS threshold). Calibrated on an A100-80GB
+(2026-08-13): reference-vs-reference is 0.000, a good distilled recipe
+(Lightning 4-step) is 0.487, and a collapsed recipe (corrupted weights) is
+1.194. The tolerance (0.85) sits between the good and bad clusters with margin
+on both sides. LPIPS is a frozen, non-trainable network — not an LLM/VLM judge
+and not trained on the eval corpus.
 
 ## Reference model (verified from source, 2026-08-13)
 

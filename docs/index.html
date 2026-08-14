@@ -279,13 +279,13 @@ footer{border-top:1px solid var(--border-subtle);padding:48px 24px 64px;margin-t
             <tr><th>Recipe type</th><th>LPIPS vs ref</th><th>Gate result</th></tr>
           </thead>
           <tbody>
-            <tr><td>Reference (ref vs ref)</td><td class="val">~0.00</td><td class="val good">pass</td></tr>
-            <tr><td>Good quant / distilled</td><td class="val">low</td><td class="val good">pass</td></tr>
-            <tr><td>Collapsed recipe</td><td class="val">high</td><td class="val">fail</td></tr>
+            <tr><td>Reference (ref vs ref)</td><td class="val">0.000</td><td class="val good">pass</td></tr>
+            <tr><td>Distilled (Lightning)</td><td class="val">0.487</td><td class="val good">pass</td></tr>
+            <tr><td>Collapsed recipe</td><td class="val">1.194</td><td class="val">fail</td></tr>
           </tbody>
         </table>
       </div>
-      <p class="sec-body" style="margin-top:20px;font-size:15px">Tolerance is a <strong style="color:var(--ink)">LPIPS threshold</strong> between good and bad recipes, calibrated on-box. LPIPS is a frozen, non-trainable network — deterministic, no judge in the loop.</p>
+      <p class="sec-body" style="margin-top:20px;font-size:15px">Tolerance = <strong style="color:var(--ink)">0.85 LPIPS</strong>, calibrated on an A100-80GB — sits between the good cluster (0.49) and collapsed (1.19) with margin. LPIPS is a frozen, non-trainable network; no judge in the loop.</p>
     </div>
   </div>
 </section>
